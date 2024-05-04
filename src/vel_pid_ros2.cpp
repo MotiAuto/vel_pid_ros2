@@ -5,9 +5,9 @@ namespace vel_pid_ros2
     VelPidROS2::VelPidROS2(const rclcpp::NodeOptions & node_options)
     :Node("vel_control_ros2", node_options)
     {
-        this->declare_parameter("p_gain", 0.1);
-        this->declare_parameter("i_gain", 0.1);
-        this->declare_parameter("d_gain", 0.1);
+        this->declare_parameter("p_gain", 4.0);
+        this->declare_parameter("i_gain", 0.0);
+        this->declare_parameter("d_gain", -1.0);
 
         this->get_parameter("p_gain", p_gain_);
         this->get_parameter("i_gain", i_gain_);
@@ -41,16 +41,10 @@ namespace vel_pid_ros2
         RCLCPP_INFO(this->get_logger(), "Start VelContollerROS2. control_freqency:%d", control_freqency_);
     }
 
-    std::chrono::milliseconds VelPidROS2::get_milli(int freq)
-    {
-        return std::chrono::milliseconds(freq);
-    }
-
     void VelPidROS2::imu_callback(const sensor_msgs::msg::Imu::SharedPtr msg)
     {
         now_velocity_->linear.x += msg->linear_acceleration.x * delta_time_;
         now_velocity_->linear.y += msg->linear_acceleration.y * delta_time_;
-        now_velocity_->angular.z = msg->angular_velocity.z;
     }
 
     void VelPidROS2::cmd_callback(const geometry_msgs::msg::Twist::SharedPtr msg)
@@ -64,7 +58,7 @@ namespace vel_pid_ros2
 
         result.linear.x = x_pid_.calc_pid(target_velocity_->linear.x, now_velocity_->linear.x, delta_time_);
         result.linear.y = y_pid_.calc_pid(target_velocity_->linear.y, now_velocity_->linear.y, delta_time_);
-        result.angular.z = rotation_pid_.calc_pid(target_velocity_->angular.z, now_velocity_->angular.z, delta_time_);
+        result.angular.z = target_velocity_->angular.z;
 
         publisher_->publish(result);
     }

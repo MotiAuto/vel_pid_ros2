@@ -7,8 +7,8 @@ namespace vel_pid_ros2
     float PID::calc_pid(float target, float now, float delta_time)
     {
         proporsal = target - now;
-        integral += proporsal * delta_time;
-        differential = (proporsal - previous_proporsal) / delta_time;
+        integral += proporsal;
+        differential = proporsal - previous_proporsal;
         previous_proporsal = proporsal;
 
         return proporsal * p_gain + integral * i_gain + differential * d_gain;
