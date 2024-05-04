@@ -5,6 +5,17 @@ namespace vel_pid_ros2
     VelPidROS2::VelPidROS2(const rclcpp::NodeOptions & node_options)
     :Node("vel_control_ros2", node_options)
     {
+        this->declare_parameter("p_gain", 0.1);
+        this->declare_parameter("i_gain", 0.1);
+        this->declare_parameter("d_gain", 0.1);
+
+        this->get_parameter("p_gain", p_gain_);
+        this->get_parameter("i_gain", i_gain_);
+        this->get_parameter("d_gain", d_gain_);
+
+        this->declare_parameter("freqency", 10);
+        this->get_parameter("freqency", control_freqency_);
+        
         cmd_subscriber_ = this->create_subscription<geometry_msgs::msg::Twist>(
             "/cmd_vel",
             0,
@@ -17,17 +28,9 @@ namespace vel_pid_ros2
 
         publisher_ = this->create_publisher<geometry_msgs::msg::Twist>("/output", 0);
 
-        timer_ = this->create_wall_timer(get_milli(control_freqency_), std::bind(&VelPidROS2::control_callback, this));
+        timer_ = this->create_wall_timer(std::chrono::milliseconds(control_freqency_), std::bind(&VelPidROS2::control_callback, this));
 
-        this->declare_parameter("p_gain", 0.1);
-        this->declare_parameter("i_gain", 0.1);
-        this->declare_parameter("d_gain", 0.1);
-
-        this->get_parameter("p_gain", p_gain_);
-        this->get_parameter("i_gain", i_gain_);
-        this->get_parameter("d_gain", d_gain_);
-
-        this->declare_parameter("control_freqency", 10);
+        
 
         x_pid_.set_gain(p_gain_, i_gain_, d_gain_);
         y_pid_.set_gain(p_gain_, i_gain_, d_gain_);
