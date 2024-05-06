@@ -22,8 +22,6 @@ namespace vel_pid_ros2
         void cmd_callback(const geometry_msgs::msg::Twist::SharedPtr msg);
         void control_callback();
 
-        std::chrono::milliseconds get_milli(int freq);
-
         rclcpp::Subscription<sensor_msgs::msg::Imu>::SharedPtr imu_subscriber_;
         rclcpp::Subscription<geometry_msgs::msg::Twist>::SharedPtr cmd_subscriber_;
         rclcpp::TimerBase::SharedPtr timer_;
@@ -36,6 +34,8 @@ namespace vel_pid_ros2
         PID x_pid_;
         PID y_pid_;
         PID rotation_pid_;
+
+        bool imu_flag_, cmd_flag_;
     };
 }
 

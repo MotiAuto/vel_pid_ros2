@@ -5,9 +5,9 @@ namespace vel_pid_ros2
     VelPidROS2::VelPidROS2(const rclcpp::NodeOptions & node_options)
     :Node("vel_control_ros2", node_options)
     {
-        this->declare_parameter("p_gain", 4.0);
-        this->declare_parameter("i_gain", 0.0);
-        this->declare_parameter("d_gain", -1.0);
+        this->declare_parameter("p_gain", 0.1);
+        this->declare_parameter("i_gain", 0.1);
+        this->declare_parameter("d_gain", 0.1);
 
         this->get_parameter("p_gain", p_gain_);
         this->get_parameter("i_gain", i_gain_);
@@ -39,28 +39,41 @@ namespace vel_pid_ros2
         delta_time_ = 1.0 / (float)(control_freqency_);
 
         RCLCPP_INFO(this->get_logger(), "Start VelContollerROS2. control_freqency:%d", control_freqency_);
+
+        imu_flag_ = false;
+        cmd_flag_ = false;
     }
 
     void VelPidROS2::imu_callback(const sensor_msgs::msg::Imu::SharedPtr msg)
     {
         now_velocity_->linear.x += msg->linear_acceleration.x * delta_time_;
         now_velocity_->linear.y += msg->linear_acceleration.y * delta_time_;
+
+        imu_flag_ = true;
     }
 
     void VelPidROS2::cmd_callback(const geometry_msgs::msg::Twist::SharedPtr msg)
     {
         target_velocity_ = msg;
+
+        cmd_flag_ = true;
     }
 
     void VelPidROS2::control_callback()
     {
-        auto result = geometry_msgs::msg::Twist();
+        if(imu_flag_&&cmd_flag_)
+        {
+            auto result = geometry_msgs::msg::Twist();
 
-        result.linear.x = x_pid_.calc_pid(target_velocity_->linear.x, now_velocity_->linear.x, delta_time_);
-        result.linear.y = y_pid_.calc_pid(target_velocity_->linear.y, now_velocity_->linear.y, delta_time_);
-        result.angular.z = target_velocity_->angular.z;
+            result.linear.x = x_pid_.calc_pid(target_velocity_->linear.x, now_velocity_->linear.x, delta_time_);
+            result.linear.y = y_pid_.calc_pid(target_velocity_->linear.y, now_velocity_->linear.y, delta_time_);
+            result.angular.z = target_velocity_->angular.z;
 
-        publisher_->publish(result);
+            publisher_->publish(result);
+
+            imu_flag_ = false;
+            cmd_flag_ = false;
+        }
     }
 }
 
